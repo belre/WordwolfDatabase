@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+	render(:erb, :"management/header/header_menuframe")
+%>
+
+<script type="text/javascript" src = "/js/CommonFunctions.js"></script>
+<script type="text/javascript">
+window.onload = function(){	
+	// 時間設定処理関連
+	starttime_expr = new Date();
+
+	if( starttime_expr.getHours() == 0 ) {
+		starttime_expr.setDate(starttime_expr.getDate() - 1);
+		starttime_expr.setSeconds(0);
+		starttime_expr.setMinutes(0);
+		starttime_expr.setHours(23);
+		//starttime_expr = starttime_expr - 1;
+	}
+	else {
+		starttime_expr.setSeconds(0);
+		starttime_expr.setMinutes(0);
+		starttime_expr.setHours(starttime_expr.getHours() - 1);
+	}
+				
+	endtime_expr = new Date();
+	endtime_expr.setSeconds(0);
+	endtime_expr.setMinutes(0);
+	
+	document.getElementById('datetime_starttime').value = formatUIDatetimeLocalObject(starttime_expr);
+	document.getElementById('datetime_endtime').value = formatUIDatetimeLocalObject(endtime_expr);
+};
+			
+
+</script>
+		
+</head>
+<!-- ページのタイトルを記述 -->
+<title>Word Management</title>
+
+<body>
+	<%= render(:erb, :"management/management_menubar") %>
+	
+	<div id="MenuArea_Right">
+	<h1>Entry New Battle</h1>
+	<form method="post" name="battleform" action="processing">
+	<input type="hidden" name="proctype" value="creategame"></input>
+	<table border=0>
+		<tr><th colspan=2>Battle Information</th></tr>
+		<tr><td>主催者</td><td><input type="text" name="battle_host" maxlength=20 id="text_host" value="ベルレ" required="required"></input></td><td></td></tr>
+		<tr><td>試合数</td><td><input type="number" name="battle_num_battle" min=1 max=50 value=1 required="required"></input>戦</td><td></td></tr>
+		<tr><td>開始時刻</td><td><input type="datetime-local" name = "battle_starttime" id="datetime_starttime" required="required"></input></td><td>YYYY-MM-DDTHH:mm:ss</td></tr>
+		<tr><td>終了時刻</td><td><input type="datetime-local" name = "battle_endtime" id="datetime_endtime" required="required"></input></td><td>YYYY-MM-DDTHH:mm:ss</td></tr>
+		<%= csrf_tag %>
+		<tr><td></td><td><input type="submit" value="Create New Battle" ></td></tr>
+	</table>
+	</form>
+	</div>
+
+	
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+<!-- SCRIPTS -->
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>

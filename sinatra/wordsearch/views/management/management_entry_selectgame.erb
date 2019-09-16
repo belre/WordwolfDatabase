@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+%>
+
+<script type="text/javascript">
+function selectLink()
+{
+	obj = document.getElementById("link_selector");
+
+	if( obj == null) {
+		return ;
+	}
+
+	if( gameform.key.value == "arrange") {	
+		obj.value= "arrangegameinfo";
+	} else if(gameform.key.value =="delete") {
+		obj.value ="deletegame";
+	}
+}
+</script>
+
+</head>
+<body>
+<!-- コンテンツを記述 -->
+	<h2> Hello! ベルレ! </h2>
+	<h4>あなたが主催したワードウルフのお題を登録することができます！ 登録する試合を選択してください！</h4>
+		
+	<hr>
+	<form name="gameform" method="post" onsubmit="return selectLink()">
+	<table border=1>
+	<tr><th>選択</th><th>試合番号</th><th>開始時刻</th><th>制限時間(+延長)</th><th>GM</th><th>お題と勝敗</th><th>試合結果</th></tr>
+	<% if @dbdataview != nil then
+		@dbdataview[:GameInfo].each do |gamerow| %>
+		<tr>
+			<td> <input type="radio" name="selector" value = "<%= gamerow.gameindex.to_s %>"
+			<% if gamerow.gameindex == 1 then %>
+				checked="checked"
+			<% end %>
+			></input> </td>
+			<td> Battle <%= gamerow.gameindex %> </td>
+			<td> <%= gamerow.starttime %> </td>
+			<td> <%= gamerow.limittime_min %> 分 <%=gamerow.limittime_sec%> 秒 
+				<% if gamerow.extendtime_min != 0 && gamerow.extendtime_sec then %>
+					<br> + ( <%= gamerow.extendtime_min %> 分 <%=gamerow.extendtime_sec%> 秒 )
+				<% end %>
+			<td> <%= gamerow.tbl_user_info.username %> </td>
+			<td> 
+				<% if gamerow.word_wolf != "" && gamerow.word_villager != "" %>
+					<%= gamerow.word_wolf %> - <%= gamerow.word_villager %>
+				<% else %>
+					<%= "[未登録]" %>
+				<% end %>
+			</td>
+			<td> 試合結果 </td>
+		</tr>
+			
+		<% end %>
+	<% end %>
+	</table>		
+			
+	<input type="hidden" name="proctype" id="link_selector" value=""></input>
+	<input type="submit" id="arrangegame" value="編集！" onclick="gameform.key.value='arrange'"></input>
+	<input type="submit" id="deletegame" value="削除!" onclick="gameform.key.value='delete'"></input>
+	<input type="hidden" name="key" value="">
+	<%= csrf_tag %>
+	</form>
+
+	<form method="get" action="/wordsearch/management/entrybattle/">
+	<input type="submit" value="完了!"></input>
+</form>
+
+	<% if @testdblist != nil then %>
+	<table border =1>
+		<tr><th>ID</th><th>コンテンツ名</th><th>日時</th></tr>
+		<% @testdblist.each do |content| %>
+		<tr>
+			<td><%= content["id"] %></td>
+			<td><%= content["name"] %></td>
+			<td><%= content["date"] %></td>
+		</tr>
+		
+		<% end %>
+	</table>
+	<% end %>
+<!--
+http://www.koikikukan.com/archives/2018/11/29-000300.php
+-->
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>

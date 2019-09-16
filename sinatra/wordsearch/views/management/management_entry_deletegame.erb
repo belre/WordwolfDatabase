@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+%>
+
+
+</head>
+<body>
+<!-- コンテンツを記述 -->
+	<form name="gameform" method="post" >
+	<input type="hidden" name="proctype" id="link_selector" value="selectgame"></input>
+	<input type="submit" value="元に戻る"></input>
+	<input type="hidden" name="key" value="">
+	<%= csrf_tag %>
+	</form>
+</form>
+
+
+<!--
+http://www.koikikukan.com/archives/2018/11/29-000300.php
+-->
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>

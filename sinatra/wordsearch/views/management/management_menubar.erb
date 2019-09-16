@@ -1,0 +1,23 @@
+<div id="MenuArea_Left">
+	<h1> Main Menu</h1>
+	<hr>
+	
+	<!--　以下POST処理テスト用の画面
+	<form method="post" name="form1" action="link1">
+		<input type="hidden" name="val" value=" <%=(@testmessage.to_i+1).to_s%>">
+		<%= csrf_tag %>
+		<a href="javascript:form1.submit()"> Top </a>
+	</form>
+	-->
+	
+	<a href="/wordsearch/management/"> Top </a> <br>
+	<a href="/wordsearch/management/entrybattle/"> Entry New Battle</a><br>
+	<a href="."> Arrange Old Battle</a><br>
+	<form method="post"name="form2" action="del">
+		<input type="hidden" name="_method" value="delete">
+		<%= csrf_tag %>
+		<a href="javascript:form2.submit()"> Delete Old Battle </a><br>
+		<input type="textbox" name="guiparam" value="Otona">
+	</form>
+	<a href="/wordsearch/"> Back</a>
+</div>

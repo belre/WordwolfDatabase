@@ -1,0 +1,10 @@
+
+<% if locals["username"] != nil then %>
+<%= 
+	@dbdataview[:UserInfo]
+		.where( :username => locals["username"])
+		.count
+%>
+<% end %>
+
+		

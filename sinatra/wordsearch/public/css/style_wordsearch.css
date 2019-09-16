@@ -1,0 +1,34 @@
+
+
+th.th_2sep_areatitle
+{
+	background: #FFCCFF;
+	width:50%;
+}
+
+td.td_2sep_areavalid
+{
+	background: #FF99FF;
+	width: 50%;
+}
+
+td.td_2sep_areainvalid
+{
+	background: #999999;
+	width: 50%;
+}
+
+div.square_banner {
+	width: 128px;
+	height: 32px;
+	background: #CCCCCC;
+	border-color: black;
+	border-width: 10px;
+	content: "Don't miss it!";
+}
+
+div.square_span {
+	height: 16px;
+}
+
+

@@ -1,0 +1,52 @@
+
+
+BODY {
+	margin : 0;
+	padding: 90px 0px 0px 0px;
+	background-color : #CCCCCC;
+	
+}
+
+* html body{
+	overflow: auto;
+}
+
+div#TopLeft_area {
+	position: fixed !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 70%;
+	height: 90px;
+	background-color : #FFCC99;
+	overflow:auto;
+}
+
+
+div#TopRight1_1_area {
+	position: fixed !important;
+	position: absolute;
+	top: 0;
+	left: 70%;
+	width: 30%;
+	height: 50px;
+	background-color : #99CCFF;
+	overflow:auto;
+}
+div#TopRight1_2_area {
+	position: fixed !important;
+	position: absolute;
+	top: 50px;
+	left: 70%;
+	width: 30%;
+	height: 40px;
+	background-color : #99CCFF;
+	overflow:auto;
+}
+
+
+
+* html div#Bottom_area {
+	width: 100%;
+	overflow: auto;
+}

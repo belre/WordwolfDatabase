@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+	render(:erb, :"management/header/header_menuframe")
+%>
+</head>
+<!-- ページのタイトルを記述 -->
+<title>Word Management</title>
+
+<body>
+	<%= render(:erb, :"management/management_menubar") %>
+
+	<div id="Right_area">
+	<%=
+		if @testmessage.to_i >= 1 then
+			"POST Count:" + @testmessage
+		else
+			"GET Request"
+		end
+	%>
+
+	<% if @testdblist != nil then %>
+	<table border =1>
+		<tr><th>ID</th><th>コンテンツ名</th><th>日時</th></tr>
+		<% @testdblist.each do |content| %>
+		<tr>
+			<td><%= content["id"] %></td>
+			<td><%= content["name"] %></td>
+			<td><%= content["date"] %></td>
+		</tr>
+		
+		<% end %>
+	</table>
+	<% end %>
+	</div>
+		
+	
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+<!-- SCRIPTS -->
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>

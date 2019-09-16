@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+		render(:erb, :"header/header_common")
+%>
+		
+<!-- ページのタイトルを記述 -->
+<title>Main Menu - Word Search - </title>
+</head>
+<body>
+
+<!-- コンテンツを記述 -->
+<a href="./wordsearch/"> Word Search </a><br>
+		
+<form method="post" action="upload" enctype="multipart/form-data">
+<input type="file" name="fileloader" accept="image/*">
+<input type="submit">
+</form>
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+<!-- SCRIPTS -->
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>

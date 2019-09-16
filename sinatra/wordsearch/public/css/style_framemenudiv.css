@@ -1,0 +1,27 @@
+
+
+BODY {
+	margin : 0;
+	padding: 0px 0px 0px 180px;
+	
+}
+
+* html body{
+	overflow: auto;
+}
+
+div#MenuArea_Left {
+	position: fixed !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 180px;
+	height: 100%;
+	background-color : #FFCC99;
+	overflow:auto;
+}
+
+* html div#MenuArea_Right {
+	height: 100%;
+	overflow: auto;
+}

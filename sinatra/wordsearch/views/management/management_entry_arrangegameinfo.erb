@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+%>
+</head>
+
+
+	
+<script type="text/javascript" src = "/js/CommonFunctions.js"></script>
+<script type="text/javascript">
+
+
+window.onload = function () {
+	// 時間設定処理関連
+	starttime_expr = new Date();
+	starttime_expr.setSeconds(0);
+	starttime_expr.setMinutes(0);
+
+	document.getElementById('datetime_starttime').value = formatUIDatetimeLocalObject(starttime_expr);
+}
+
+
+function updateTextGameMaster(eventname)
+{
+	form_link_selector = document.getElementById("link_selector");
+	form_link_selector.value= "checkself";
+	
+	form_button_event = document.gameinfoform.button_event
+	form_button_event.value = eventname;
+	
+	gameinfoform.submit();
+}
+		
+		
+function updateTextPlayerName(eventname)
+{
+	//ui_text_gamemaster = document.getElementById("text_gamemaster");
+	
+	form_link_selector = document.getElementById("link_selector");
+	form_link_selector.value= "checkself";
+			
+	form_button_event = document.gameinfoform.button_event
+	form_button_event.value = eventname;
+			
+	gameinfoform.submit();
+}
+
+function updateThumbnailPlayer(eventname, uiname)
+{
+	form_link_selector = document.getElementById("link_selector");
+	form_link_selector.value= "checkself";
+	
+	form_button_event = document.gameinfoform.button_event
+	form_button_event.value = eventname;
+			
+	form_thumbnail_event = document.gameinfoform.thumbnail_event
+	form_thumbnail_event.value = uiname
+	
+	gameinfoform.submit();
+}
+		
+function updateByButtonEvent(eventname)
+{
+	//ui_text_gamemaster = document.getElementById("text_gamemaster");
+	
+
+	form_link_selector = document.getElementById("link_selector");
+	form_link_selector.value= "checkself";
+
+	form_button_event = document.gameinfoform.button_event
+	form_button_event.value = eventname;
+			
+	gameinfoform.submit();
+}
+		
+function selectLink()
+{
+	form_link_selector = document.getElementById("link_selector");
+	
+	if( form_link_selector == null) {
+		return ;
+	}
+
+	if( gameinfoform.key.value == "arrange") {	
+		form_link_selector.value= "arrangeremarks";
+	} else if(gameinfoform.key.value =="backpage") {
+		form_link_selector.value ="selectgame";
+	}
+}
+		
+</script>		
+
+	
+<%
+def getUserDetails(username)
+	if username == nil then
+		return nil
+	end
+	
+	tmpuser = @dbdataview[:UserInfo].where( :username => username)
+	
+	
+	if( tmpuser.count >= 1 ) then
+		return tmpuser.first
+	else
+		return nil
+	end
+end
+
+
+@selector_val = @params[:select_index]
+dbitem = @dbdataview[:GameInfo].where( :gameindex => @selector_val).first
+if dbitem == nil then
+	raise "Invalid Access"
+end
+
+	
+#### --- initial
+if @params['form_attributes'] == nil then
+	@params['form_attributes'] = {}
+	@params['form_attributes'][:value_gamemaster] = dbitem.tbl_user_info.username
+	@params['form_attributes'][:issearchmode] = false
+end
+	
+	
+if @params['form_attributes'][:searchmode_valid] == true  then
+	@params["rulecandidates_0"] = @dbdataview[:GameRuleSetting]
+		.where(:rule => @params['form_attributes'][:searchmode_rule], :voterule => @params['form_attributes'][:searchmode_voterule], :comebackrule => @params['form_attributes'][:searchmode_comebackrule], :wolfnumber => @params['form_attributes'][:searchmode_wolfnumber].to_i)
+		.pluck(:gsId, :text)
+else
+	### @dbdataview[:RuleGameRuleSetting] 
+	@params["rulecandidates_0"] = [[dbitem.tbl_game_rule_setting.gsId, dbitem.tbl_game_rule_setting.text]]
+end
+	
+%>
+</head>
+	
+<body>
+
+
+<!-- コンテンツを記述 -->
+	
+	<h4> 試合経過を入力してください！</h4>
+	<hr>
+	<form name="gameinfoform" method="post" onsubmit="return selectLink()" enctype="multipart/form-data">
+	<input type="hidden" name="button_event" value="none"></input>
+	<input type="hidden" name="thumbnail_event" value="none"></input>
+	<table>
+		<tr><th colspan=4> Game Information </th></tr>
+		<tr><th>GM
+		<% if getUserDetails(@params['form_attributes'][:value_gamemaster]) == nil then %>
+			<font color="red">(新規)</font>
+		<% end %>
+			</th><td><input type="text" id="text_gamemaster" name="gamemaster" value="<%=@params['form_attributes'][:value_gamemaster] %>"></input></td>
+		<td>
+		</td><td></td></tr>
+		<script type="text/javascript">
+			ui_text_gamemaster = document.getElementById("text_gamemaster");
+			ui_text_gamemaster.addEventListener('change', updateTextGameMaster);
+		</script>
+		
+		<tr><th>ルール</th><td>
+
+
+		<% if @params['form_attributes'][:issearchmode] || @params["isruleinit_0"] then %>
+			<select name="list_rule">
+			<% @dbdataview[:GameRuleSetting].group(:rule).pluck(:rule).each do |val, i|  %>
+				<% if val == @params['form_attributes'][:searchmode_rule] then %> 
+					<option value="<%= val %>" selected = "selected"> <%= val %> </option>
+				<% elsif val != "" then %>
+					<option value="<%= val %>"> <%= val %> </option>
+				<% end %>
+			<% end %>
+			</select><br>
+			<select name="list_voterule">
+			<% @dbdataview[:GameRuleSetting].group(:voterule).pluck(:voterule).each do |val, i|  %>
+				<% if val == @params['form_attributes'][:searchmode_voterule] then %> 
+					<option value="<%= val %>" selected = "selected"> <%= val %> </option>
+				<% elsif val != "" then %>
+					<option value="<%= val %>"> <%= val %> </option>
+				<% end %>
+			<% end %>
+			</select><br>
+			<select name="list_comebackrule">
+			<% @dbdataview[:GameRuleSetting].group(:comebackrule).pluck(:comebackrule).each do |val, i|  %>
+			<% if val == @params['form_attributes'][:searchmode_comebackrule] then %> 
+					<option value="<%= val %>" selected = "selected"> <%= val %> </option>
+				<% elsif val != "" then %>
+					<option value="<%= val %>"> <%= val %> </option>
+				<% end %>
+			<% end %>
+			</select><br>
+			<select name="list_wolfnumber">
+			<% @dbdataview[:GameRuleSetting].group(:wolfnumber).pluck(:wolfnumber).each do |val, i|  %>
+				<% if val.to_s == @params['form_attributes'][:searchmode_wolfnumber] then %> 
+					<option value="<%= val %>" selected = "selected"> <%= val %> </option>
+				<% elsif val != "" then %>
+					<option value="<%= val %>"> <%= val %> </option>
+				<% end %>			<% end %>
+			</select> w <br>
+			<% if @params['form_attributes'][:form_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == false then %>
+				<input type="submit" value="更新" onclick='updateByButtonEvent("updateRule")'><br>
+			<% end %>
+		<% else %>
+			<select name="list_targetrules">
+				<% @params["rulecandidates_0"].each do |val1, val2| %>
+					<option value="<%= val1 %>"> <%= val2 %> </option>
+				<% end %>
+			</select>
+			
+			<% if @params['form_attributes'][:form_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == false then %>
+				<input type="submit" value="変更" onclick='updateByButtonEvent("changeRule")'>
+			<% end %>
+			<br>
+		<% end %>
+		</td><td></td><td></td></tr>
+		<tr><th>村人ワード</th><td><input type="text" name = "word_villagers" value = "パスワード"></input></td><td></td><td></td></tr>
+		<tr><th>人狼ワード</th><td><input type="text" name = "word_wolves" value = "メールアドレス"></input></td><td></td><td></td></tr>
+		<tr><th>勝敗</th>
+			<td>
+			<input type="radio" name="winlose" value="win_villagers" checked="checked">村人陣営</input>
+			<input type="radio" name="winlose" value="win_wolves">人狼陣営</input>
+			<input type="radio" name="winlose" value="winlose_draw">引き分け</input></td><td></td><td></td></tr>
+		<tr><th>逆転</th>
+			<td>
+			<input type="checkbox" name="comeback_villagers">村人逆転</input>
+			<input type="checkbox" name="comeback_wolves">人狼逆転</input>
+			</td><td></td><td></td></tr>
+		<tr><th>開始時刻</th><td>
+			<input type="datetime-local" name="game_starttime" id="datetime_starttime"></input></td>
+			<td></td><td></td>
+		</tr>
+		<tr><th>制限時間</th>
+			<td>
+			<input type="number" name="game_limittime_min" value="6" min=0 max=59></input>分<input type="number" name="game_limittime_sec" value="0" min=0 max=59></input>秒<br>
+			<input type="checkbox" name="game_giveup"></input>時短</td><td></td><td></td>
+		</tr>
+		<tr><th>延長時間</th>
+			<td>
+			<input type="number" name="game_extendtime_min" value="0" min=0 max=59></input>分<input type="number" name="game_extendtime_sec" value="0" min=0 max=59></input>秒</td><td></td><td></td>
+		</tr>
+		<tr><th>参加人数</th>
+			<td>
+		<% if @params['form_attributes'][:form_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == nil then %>
+			<input type="number" name="playernumber" value="6" min=3 max=99></input>人<br>
+		<% elsif @params['form_attributes'][:state_playerinfo] == false then %>
+			<input type="number" name="playernumber" value="<%=@params['form_attributes'][:form_playerinfo][:number] .to_i%>" min=3 max=99></input>人<br>
+		<% else %>
+			<input type="hidden" name="playernumber" value="<%=@params['form_attributes'][:form_playerinfo][:number] .to_i%>">
+			<%=@params['form_attributes'][:form_playerinfo][:number] .to_i%> 人<br>
+		<% end %>
+			</td><td></td><td></td>
+		</tr>
+
+		<tr><th></th><td>
+		<% if @params['form_attributes'][:state_playerinfo] == nil or @params['form_attributes'][:state_playerinfo] == false then %>
+			<input type="submit" value="プレイヤー情報変更" onclick='updateByButtonEvent("updatePlayerInfo")'><br>
+		<% end %>
+		</td><td></td><td></td>
+		</tr>
+
+		<% if @params['form_attributes'][:state_playerinfo] == true then %>
+			<tr><th>参加者</th><td></td><td></td><td></td></tr>
+			<tr><td>サムネ</td><td>名前</td><td>人狼?</td><td>被投票数</td><td>逆転ワード</td><td>落ち状況</td><td></td></tr>
+			<% (1..@params['form_attributes'][:form_playerinfo][:number].to_i).each_with_index do |val,i| %>
+			<tr>
+				<% 
+				dbdata_init = @dbdataview[:UserInfo].where(:uId => 1).first 
+
+				if @params['form_attributes'][:form_playerinfo][:playername].count != @params['form_attributes'][:form_playerinfo][:number] or @params['form_attributes'][:form_playerinfo][:thumbnailpath].count != @params['form_attributes'][:form_playerinfo][:number] then				
+					403
+				end
+				
+				@targetuser = {}
+				@targetuserdetail = nil
+				
+				key_username = ("player_name_" + i.to_s).to_sym
+				key_current_thumbnail = ("player_thumbnail_path_" + i.to_s).to_sym
+				key_next_thumbnail = ("player_thumbnail_nextpath_" + i.to_s).to_sym
+				
+				username = @params['form_attributes'][:form_playerinfo][:playername][key_username]
+				if username != nil then
+					@targetuserdetail = getUserDetails(username)
+				
+					if @params['form_attributes'][:form_playerinfo][:thumbnailpath][key_next_thumbnail] == nil then
+						if @params['form_attributes'][:form_playerinfo][:thumbnailpath][key_current_thumbnail] == nil then
+							@targetuser = { :username => username, :thumbnailpath => dbdata_init.thumbnailpath }
+						else
+							if @targetuserdetail != nil and @targetuserdetail[:thumbnailpath] != nil then
+								@targetuser = { :username => username, :thumbnailpath => @targetuserdetail[:thumbnailpath] }
+							else
+								@targetuser = { :username => username, :thumbnailpath => @params['form_attributes'][:form_playerinfo][:thumbnailpath][key_current_thumbnail] }
+							end
+						end
+					else
+						@targetuser = { :username => username, :thumbnailpath => @params['form_attributes'][:form_playerinfo][:thumbnailpath][key_next_thumbnail] }
+					end
+					
+				else
+					# ここに何か処理が必要だと思われる。
+					# SelectGame -> ArrangeGameInfoに移行するときに、指定したDBのロード処理を入れたら、なんとか回避できるかも
+					@targetuser = {:username => dbdata_init.username, :thumbnailpath => dbdata_init.thumbnailpath }
+					@targetuserdetail = getUserDetails(dbdata_init.username)
+				end
+				 %>
+			<td>
+				<input type="hidden" name="player_thumbnail_path_<%=i.to_s%>" value="<%=@targetuser[:thumbnailpath]%>">
+				<image src="/resource/thumbnails/<%=@targetuser[:thumbnailpath]%>" width=32 height=32>
+				</td>
+				<td>
+					<input type="text" id="player_name_<%=i.to_s%>" name="player_name_<%=i.to_s%>" value="<%=@targetuser[:username]%>">
+					<% if @targetuserdetail == nil then %>
+						<font color="red">(新規)</font>
+					<% end %>
+					<br>
+					<input type="file" id="player_thumbnailbutton_<%=i.to_s%>" name="player_thumbnail_nextpath_<%=i.to_s%>" accept="image/*">
+				</td>
+			<td><input type="checkbox" name="player_iswolf_<%=i.to_s%>"></input></td>
+			<td><input type="number" name="player_electednumber_<%=i.to_s%>" min=0 value=0></input></td>
+			<td><input type="textbox" name="player_comebackword_<%=i.to_s%>" size=15></input></td>
+			<td><input type="checkbox" name="player_isghost_<%=i.to_s%>"></input>ゴースト（棄権）<br><input type="checkbox" name="player_isdisposed_<%=i.to_s%>"></input>投票放棄<br></td>
+			<td></td>
+			</tr>
+			<script type="text/javascript">
+				ui_text_player = document.getElementById("player_name_<%=i.to_s%>");
+				ui_text_player.addEventListener('change', function(){updateTextPlayerName('updatePlayerInfo')});
+				
+				ui_thumbnail = document.getElementById("player_thumbnailbutton_<%=i.to_s%>");
+				ui_thumbnail.addEventListener('change', function(){updateThumbnailPlayer('updatePlayerInfo', "player_thumbnail_nextpath_<%=i.to_s%>")});
+			</script>
+			<% end %>
+		<% end %>
+		</table>
+		<hr>
+			
+		<input type="hidden" name="proctype" id="link_selector" value=""></input>
+		<% if @params['form_attributes'][:state_playerinfo] == true then %>
+			<input type="submit" value="やり取り編集" onclick="gameinfoform.key.value='arrange'"></input>
+		<% end %>
+		<input type="submit" value="やめる" onclick="gameinfoform.key.value='backpage'"></input>
+		<input type="hidden" name="key" value="">
+		<%= csrf_tag %>
+	</form>
+
+	
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+<!-- SCRIPTS -->
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%= 
+	render(:erb, :"header/header_common")
+%>
+		
+<!-- ページのタイトルを記述 -->
+<title>Word Management</title>
+</head>
+<body>
+
+		<h1> コンテンツを選択してね！</h1>
+		<hr>
+		
+		<table border=0 width=70%>
+			<tr><th class="th_2sep_areatitle">ゲストユーザー</th><th class="th_2sep_areatitle">管理者向け</th></tr>
+			<tr><td class = "td_2sep_areainvalid" align="center">
+				Not Available
+				</td>
+				<td class = "td_2sep_areavalid" align="center"> 
+					<div class="square_span"></div>
+					<div class="square_banner"></div>
+					Word Management
+					<form>
+						<input type="button" value="GO!" onclick="location.href='/wordsearch/management/'">
+					</form>
+			</td></tr>
+		</table>
+		
+		<hr>
+		
+		<address>
+			2019 Belre
+		</address>
+		
+		
+		
+<!-- スクリプトでブロッキングを起こすものはここに記述
+ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
+<!-- SCRIPTS -->
+<!-- 例: <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+</body>
+</html>
