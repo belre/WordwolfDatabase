@@ -47,7 +47,7 @@ class StateManagement_SelectGame
 	
 	def getDataViewFromTables()
 		dbdata = {}
-		DatabaseQueryController.addToDbData_GameInfo(@_common_params, dbdata)
+		DatabaseQueryController.addToDbData_GameInfo(@_common_params[:battle_id], dbdata)
 		return dbdata
 	end
 	
@@ -96,9 +96,6 @@ class StateManagement_DeleteGame
 	def preempt(params)
 		@_isend_preempt =true
 		@_proctype = params[:proctype]
-		
-		p "Selector" + @_common_params[:select_index].to_s
-		
 	end
 	
 	"

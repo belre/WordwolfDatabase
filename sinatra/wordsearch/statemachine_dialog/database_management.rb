@@ -27,8 +27,10 @@ end
 # TblUserInfo（ユーザ情報テーブル)
 class TblUserInfo < ActiveRecord::Base
 	has_many :tbl_game_info, :class_name => "TblGameInfo", :primary_key => :guId_gamemaster, :foreign_key => :guId_gamemaster
-
-	
+	has_many :tbl_game_vote, :class_name => "TblGameVote", :primary_key => :uId_elected, :foreign_key => :uId_elected
+	has_many :tbl_game_vote, :class_name => "TblGameVote", :primary_key => :uId_target, :foreign_key => :uId_target
+	has_many :tbl_game_player, :class_name => "TblGamePlayer", :primary_key => :uId, :foreign_key => :uId
+	has_many :tbl_game_answer, :class_name => "TblGameAnswer", :primary_key => :uId, :foreign_key => :uId
 end
 
 # TblGameInfo （ゲーム情報テーブル)
@@ -37,28 +39,32 @@ class TblGameInfo < ActiveRecord::Base
 	belongs_to :tbl_game_rule_setting, :class_name => "TblGameRuleSetting", :foreign_key => :gsId
 	belongs_to :tbl_game_result, :class_name => "TblGameResult", :foreign_key => :grId
 	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :guId_gamemaster
+	has_many :tbl_game_vote, :class_name => "TblGameVote", :primary_key => :gId, :foreign_key => :gId
+	has_many :tbl_game_player, :class_name => "TblGamePlayer", :primary_key => :gId, :foreign_key => :gId
+	has_many :tbl_game_answer, :class_name => "TblGameAnswer", :primary_key => :gId, :foreign_key => :gId
 end
 	
 
 
 # TblGameVote（投票テーブル）
 class TblGameVote < ActiveRecord::Base
-	
-	
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId_elected
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId_target
+	belongs_to :tbl_game_info, :class_name => "TblGameVote", :foreign_key => :gId
 end
 
 
-# TblWolfRole（人狼テーブル）
-class TblGameWolves < ActiveRecord::Base
-	
-	
+# TblGamePlayer（プレイヤーテーブル）
+class TblGamePlayer < ActiveRecord::Base
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId
+	belongs_to :tbl_game_info, :class_name => "TblGameVote", :foreign_key => :gId
 end
 
 
 # TblAnswer（回答・逆転テーブル）
 class TblGameAnswer < ActiveRecord::Base
-	
-	
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId
+	belongs_to :tbl_game_info, :class_name => "TblGameVote", :foreign_key => :gId
 end
 
 
@@ -103,8 +109,8 @@ class DatabaseQueryController
 						empty_gamelists << TblGameInfo.new(
 						#:Id => tbl_battleinfo, 
 						:Id => gid_primary, 
-						:gameindex => (i+1), :gsId => 2, :grId => 1, :guId_gamemaster => 2, :word_villager => "", :word_wolf => "", 
-						:starttime => localparams[:battle_starttime], :limittime_min => 10, :limittime_sec => 0, :extendtime_min => 10, :extendtime_sec => 0)
+						:gameindex => (i+1), :gsId => 2, :grId => 1, :guId_gamemaster => 1, :word_villager => "", :word_wolf => "", 
+						:starttime => localparams[:battle_starttime], :limittime_min => 10, :limittime_sec => 0, :isgiveup => false, :extendtime_min => 10, :extendtime_sec => 0)
 					end
 					
 					TblGameInfo.import empty_gamelists
@@ -119,68 +125,11 @@ class DatabaseQueryController
 	
 	
 	def self.transact_gameinfo(id, gameindex, form_attributes)
-
-		### tbl_user_info ###
-		begin 
-			TblBattleInfo.transaction do
-				# 現在時刻取得
-				nowtime = DateTime.now
-				str = (('%04d' % nowtime.year)+ "-"+ ('%02d' % (nowtime.month + 1))+ "-" + ('%02d' % nowtime.day) + "T" + 
-				('%02d' % nowtime.hour) + ":" + ('%02d' % nowtime.min) + ":" + ('%02d' % nowtime.sec))
-				
-				isinsertuser = false
-				
-				newuserlist = []
-				
-				# GM情報の追加が必要かを確認
-				currentuserlist = TblUserInfo.where(:username => form_attributes[:value_gamemaster])
-				if currentuserlist.count == 0 then
-					newuserlist << TblUserInfo.new(
-						:username => form_attributes[:value_gamemaster],
-						:thumbnailpath => "master.png",
-						:createdate => str,
-						:npcstatus => 1				# NPC扱い
-					)
-					isinsertuser = true
-				end
-				
-				# プレイヤー情報の追加が必要かを確認
-				playerinfo = form_attributes[:form_playerinfo]
-				(0..(playerinfo[:number]-1)).each do |i| 
-					symkey = ("player_name_" + i.to_s).to_sym
-					symimgkey = ("player_thumbnail_path_" + i.to_s).to_sym
-					
-					currentuserlist = TblUserInfo.where(:username => playerinfo[:playername][symkey])
-					if currentuserlist.count == 0 then
-						newuserlist << TblUserInfo.new(
-							:username => playerinfo[:playername][symkey],
-							:thumbnailpath => playerinfo[:thumbnailpath][symimgkey],
-							:createdate => str,
-							:npcstatus => 0				# NPC扱い
-						)
-					end
-					isinsertuser = true
-				end
-				
-				# Bulk Insert
-				if isinsertuser then
-					TblUserInfo.import newuserlist
-				end
-			end
-		rescue ActiveRecord::Roleback
-			raise "Roleback Error"
-		end
-			
-				
+		
 		dbdata = {}
 		
-		dbdata[:userinfo] = TblUserInfo
-		p dbdata[:userinfo].all
-		
-		#p id
-		#p gameindex
-		#p form_attributes
-		
+		# id, gameindexをもとに、
+		# 現在更新しようとしているデータを取得する
 		dbdata[:all] = TblGameInfo
 			.includes(:tbl_battle_info)
 			.includes(:tbl_game_rule_setting)
@@ -190,13 +139,193 @@ class DatabaseQueryController
 			.where(:gameindex => gameindex)
 			.first
 		
-		#dbdata.update( :
+		if !self.updateNewUser(form_attributes) then
+			raise "Transaction Error - 1"
+		end
 		
-		p dbdata[:all]
+		dbdata[:gamevote] = TblGameVote.includes(:tbl_user_info).includes(:tbl_game_info)
+		dbdata[:gameplayer] = TblGamePlayer.includes(:tbl_user_info).includes(:tbl_game_info)
+		dbdata[:gameanswer] = TblGameAnswer.includes(:tbl_user_info).includes(:tbl_game_info)
+		dbdata[:userinfo] = TblUserInfo
 		
-		# GameMaster変更
-		
-		p form_attributes
+		begin
+			# tbl_game_info
+			begin
+				
+				update_gId = nil
+				TblGameInfo.transaction do
+					# TblGameResultに既存項目があるかを確認
+					tmpdbdata = dbdata[:all].tbl_game_result
+					isupdate = false
+					if tmpdbdata.result_status == 0 then
+						isupdate = true
+					end
+					
+					# tbl_game_result
+					TblGameResult.transaction do
+						### ゲーム結果 ###
+						# この条件の場合は、TblGameResultに新規のクエリを追加しておき、追加した添字を取得する。
+						if isupdate then
+							tbl_game_result = TblGameResult.new
+							tbl_game_result.result_status = 1
+							tbl_game_result.iscomeback_villager = 0
+							tbl_game_result.iscomeback_wolf = 0
+							tbl_game_result.save!
+							
+							# GameResultのパラメータを変更する
+							dbdata[:all].grId = tbl_game_result.grId							
+						end
+						
+						### GM ###
+						# 追加されたGMのユーザIDを確認
+						dbdata[:gamemaster_tbl] = TblUserInfo
+							.where(:username => form_attributes[:value_gamemaster])
+							.first
+						
+						if dbdata[:gamemaster_tbl] == nil then
+							raise "Registration Error"
+						end
+						
+						dbdata[:all].guId_gamemaster = dbdata[:gamemaster_tbl].uId
+						
+						
+						### それ以外のパラメータ ###
+						# word
+						dbdata[:all].word_villager = form_attributes[:form_word_villagers]
+						dbdata[:all].word_wolf = form_attributes[:form_word_wolves]
+						
+						# winlose
+						dbdata[:all].tbl_game_result.result_status = form_attributes[:form_winlose]	
+						dbdata[:all].tbl_game_result.iscomeback_villager = form_attributes[:form_comeback_villagers] == true ? 1 : 2
+						dbdata[:all].tbl_game_result.iscomeback_wolf = form_attributes[:form_comeback_wolves] == true ? 1 : 2
+						dbdata[:all].starttime = form_attributes[:form_game_starttime]
+						dbdata[:all].limittime_min = form_attributes[:form_game_limittime_min]
+						dbdata[:all].limittime_sec = form_attributes[:form_game_limittime_sec]
+						dbdata[:all].isgiveup = form_attributes[:form_game_giveup] == true ? 1 : 2
+						dbdata[:all].extendtime_min = form_attributes[:form_game_extendtime_min]
+						dbdata[:all].extendtime_sec = form_attributes[:form_game_extendtime_sec]
+						
+						dbdata[:all].tbl_game_result.save!
+						dbdata[:all].save!
+						
+						
+						
+						# 登録対象のgIdを取得
+						update_gId = dbdata[:all].gId
+						#p "gId:" + update_gId.to_s
+					end
+				end
+				
+				if update_gId == nil then
+					raise "Register Error"
+				end
+				
+				TblGameVote.transaction do
+					# TblGameVoteに既存項目があるかを確認
+					tmpdbdata = dbdata[:gamevote].where(:gId => update_gId)
+					isupdate = false
+					if tmpdbdata.count == 0 then
+						isupdate = true
+					end
+					# 存在しない場合は追加する
+					if isupdate then
+						p 'TblGameVote-新規作成'
+						(1..form_attributes[:form_playerinfo][:number]).each do |i|
+							tbl_game_vote = TblGameVote.new
+							tbl_game_vote.gId = update_gId
+							tbl_game_vote.uId_elected = 1
+							tbl_game_vote.uId_target = dbdata[:gamemaster_tbl].uId
+							tbl_game_vote.numvotes = 0
+							tbl_game_vote.isdisposed = 0
+							tbl_game_vote.isghost = 0
+							tbl_game_vote.save!
+						end
+					end
+					
+					TblGamePlayer.transaction do
+						# TblGamePlayerに既存項目があるかを確認
+						tmpdbdata = dbdata[:gameplayer].where(:gId => update_gId)
+						isupdate = false
+						if tmpdbdata.count == 0 then
+							isupdate = true
+						end
+						# 存在しない場合は追加する
+						if isupdate then
+							p 'TblGamePlayer-新規作成'
+							(1..form_attributes[:form_playerinfo][:number]).each do |i|
+								tbl_game_player = TblGamePlayer.new
+								tbl_game_player.gId = update_gId
+								tbl_game_player.uId = 1
+								tbl_game_player.role = ''
+								tbl_game_player.isvillagers = 0
+								tbl_game_player.iswolves = 0
+								tbl_game_player.save!
+							end
+						end
+						
+						dbdata[:gamevote] = dbdata[:gamevote].where(:gId => update_gId) 
+						dbdata[:gameplayer] = dbdata[:gameplayer].where(:gId => update_gId)
+						dbdata[:gameanswer] = dbdata[:gameanswer].where(:gId => update_gId)
+						
+						
+						# 更新する
+						p dbdata[:gamevote].count
+						(0..dbdata[:gamevote].count-1).each do |i|
+							# ユーザID取得
+							firstuserinfo = dbdata[:userinfo].where(:username => form_attributes[:form_playerinfo][:playerinfo][("player_name_" + i.to_s).to_sym]).first
+							dbdata[:gamevote][i].uId_elected = firstuserinfo.uId
+							
+							#(UI未実装のため省略)
+							dbdata[:gamevote][i].numvotes = form_attributes[:form_playerinfo][:playerinfo][("player_numvotes_" + i.to_s).to_sym]
+							dbdata[:gamevote][i].isdisposed = form_attributes[:form_playerinfo][:playerinfo][("player_isdisposed_" + i.to_s).to_sym] == "on"
+							dbdata[:gamevote][i].isghost = form_attributes[:form_playerinfo][:playerinfo][("player_isghost_" + i.to_s).to_sym] == "on"
+							dbdata[:gamevote][i].save!
+							
+							dbdata[:gameplayer][i].gId = update_gId
+							dbdata[:gameplayer][i].uId = firstuserinfo.uId
+							if form_attributes[:form_playerinfo][:playerinfo][("player_iswolf_" + i.to_s).to_sym] == "on" then
+								dbdata[:gameplayer][i].role = '人狼'
+								dbdata[:gameplayer][i].iswolves = 1		
+								dbdata[:gameplayer][i].isvillagers = 0
+							else								
+								dbdata[:gameplayer][i].role = '村人'
+								dbdata[:gameplayer][i].iswolves = 0
+								dbdata[:gameplayer][i].isvillagers = 1
+							end
+							dbdata[:gameplayer][i].save!
+							
+							comebackword = form_attributes[:form_playerinfo][:playerinfo][("player_comebackword_" + i.to_s).to_sym]
+							p 'comebackword読み出し'
+							comebackdbdata = dbdata[:gameanswer].where(:gId => update_gId).where(:uId => firstuserinfo.uId).first
+							p 'comebackdbdata-新規作成'
+							p firstuserinfo.uId
+							
+							if comebackword == "" then
+								if comebackdbdata != nil then
+									comebackdbdata.word_answer = ''
+									comebackdbdata.save!
+									#p 'comebackdbdata-destroy'
+									#p comebackdbdata
+									#comebackdbdata.delete!
+									#comebackdbdata.word_answer = "" 
+								end
+							else
+								p 'comebackdbdata-create'
+								if comebackdbdata == nil then
+									comebackdbdata = TblGameAnswer.new
+								end
+								comebackdbdata.gId = update_gId
+								comebackdbdata.uId = firstuserinfo.uId
+								comebackdbdata.word_answer = comebackword
+								comebackdbdata.save!
+							end
+						end
+					end
+				end
+			end
+		rescue ActiveRecord::Roleback
+			raise "Roleback Error"
+		end
 		
 		
 		
@@ -210,31 +339,126 @@ class DatabaseQueryController
 		
 	end
 	
+	def self.updateNewUser(form_attributes)
+		begin 
+			TblUserInfo.transaction do
+				# 現在時刻取得
+				nowtime = DateTime.now
+				str = (('%04d' % nowtime.year)+ "-"+ ('%02d' % (nowtime.month + 1))+ "-" + ('%02d' % nowtime.day) + "T" + 
+				('%02d' % nowtime.hour) + ":" + ('%02d' % nowtime.min) + ":" + ('%02d' % nowtime.sec))
+				
+				isinsertuser = false
+				
+				newuserlist = []
+				
+				# GM情報の追加が必要かを確認
+				currentuserlist = TblUserInfo.where(:username => form_attributes[:value_gamemaster])
+				if currentuserlist.count == 0 then
+					newuserlist << TblUserInfo.new(
+					:username => form_attributes[:value_gamemaster],
+					:thumbnailpath => "master.png",
+					:createdate => str,
+					:npcstatus => 1				# NPC扱い
+					)
+					isinsertuser = true
+				end
+				
+				# プレイヤー情報の追加が必要かを確認
+				playerinfo = form_attributes[:form_playerinfo]
+				(0..(playerinfo[:number]-1)).each do |i| 
+					symkey = ("player_name_" + i.to_s).to_sym
+					symimgkey = ("player_thumbnail_path_" + i.to_s).to_sym
+					
+					p playerinfo[:playerinfo]
+					
+					currentuserlist = TblUserInfo.where(:username => playerinfo[:playerinfo][symkey])
+					if currentuserlist.count == 0 then
+						newuserlist << TblUserInfo.new(
+						:username => playerinfo[:playerinfo][symkey],
+						:thumbnailpath => playerinfo[:playerinfo][symimgkey],
+						:createdate => str,
+						:npcstatus => 0				# NPC扱い
+						)
+					end
+					isinsertuser = true
+				end
+				
+				# Bulk Insert
+				if isinsertuser then
+					TblUserInfo.import newuserlist
+				end
+			end
+		rescue ActiveRecord::Roleback
+			raise "Roleback Error"
+			return false
+		end
+		
+		return true
+	end
+	
+	def self.addToDbData_GameInfoAll(dbdata)
+		dbdata[:GameInfoAll] = TblGameInfo
+			.includes(:tbl_battle_info)
+			.includes(:tbl_game_rule_setting)
+			.includes(:tbl_game_result)
+			.includes(:tbl_user_info)
+			.all
+		
+		dbdata[:BattleInfo] = TblBattleInfo.order(Id: :desc).all
+	end
 	
 	
-	
-	
-	def self.addToDbData_GameInfo(common_params, dbdata)
+	def self.addToDbData_GameInfo(battle_id, dbdata)
 		dbdata[:GameInfo] = TblGameInfo
 			.includes(:tbl_battle_info)
 			.includes(:tbl_game_rule_setting)
 			.includes(:tbl_game_result)
 			.includes(:tbl_user_info)
-			.where(:Id => common_params[:battle_id])
+			.where(:Id => battle_id)
+			
 		#return dbdata
 	end
 	
-	def self.addToDbData_UserInfo(common_params, dbdata)
+	def self.addToDbData_UserInfo( dbdata)
 		dbdata[:UserInfo] = TblUserInfo
 			#.where(:NpcStatus => 0)
 	end
 	
-	def self.addToDbData_GameRuleSetting(common_params, dbdata)
+	def self.addToDbData_GameRuleSetting(dbdata)
 		dbdata[:GameRuleSetting] = TblGameRuleSetting
 			.where('text != ""')
 	end
 	
+	def self.addToDbData_GamePlayer(battle_id, select_index, dbdata)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		dbdata[:GamePlayer] = TblGamePlayer
+			.includes(:tbl_user_info)
+			.where(:gId => gId)		
+	end
 	
+	
+	def self.addToDbData_GameVote(battle_id, select_index, dbdata)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		dbdata[:GameVote] = TblGameVote
+			.includes(:tbl_user_info)
+			.where(:gId => gId)	
+	end
+	
+	def self.addToDbData_GameAnswer(battle_id, select_index, dbdata)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		dbdata[:GameAnswer] = TblGameAnswer
+			.includes(:tbl_user_info)
+			.where(:gId => gId)	
+	end
 	
 end
 

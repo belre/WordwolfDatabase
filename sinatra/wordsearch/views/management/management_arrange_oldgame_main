@@ -45,7 +45,7 @@ window.onload = function(){
 	
 	<div id="MenuArea_Right">
 	<h1>Entry New Battle</h1>
-	<form method="post" name="battleform" action="entrybattle/processing">
+	<form method="post" name="battleform" action="processing">
 	<input type="hidden" name="proctype" value="creategame"></input>
 	<table border=0>
 		<tr><th colspan=2>Battle Information</th></tr>
@@ -58,6 +58,8 @@ window.onload = function(){
 	</table>
 	</form>
 	</div>
+
+	
 <!-- スクリプトでブロッキングを起こすものはここに記述
 ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
 <!-- SCRIPTS -->

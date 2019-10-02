@@ -49,12 +49,25 @@ function selectLink()
 			<td> <%= gamerow.tbl_user_info.username %> </td>
 			<td> 
 				<% if gamerow.word_wolf != "" && gamerow.word_villager != "" %>
-					<%= gamerow.word_wolf %> - <%= gamerow.word_villager %>
+					<%= gamerow.word_villager %> - <%= gamerow.word_wolf %>
 				<% else %>
 					<%= "[未登録]" %>
 				<% end %>
 			</td>
-			<td> 試合結果 </td>
+			<td> 
+
+				<% if gamerow.tbl_game_result == nil then %>
+					未登録
+				<% elsif gamerow.tbl_game_result.result_status == 0 then %>
+					未登録
+				<% elsif gamerow.tbl_game_result.result_status == 1 then%>
+					引き分け
+				<% elsif gamerow.tbl_game_result.result_status == 2 then %>
+					村人勝利
+				<% elsif gamerow.tbl_game_result.result_status == 3 then %>
+					人狼勝利
+				<% end %>
+			</td>
 		</tr>
 			
 		<% end %>
@@ -68,7 +81,7 @@ function selectLink()
 	<%= csrf_tag %>
 	</form>
 
-	<form method="get" action="/wordsearch/management/entrybattle/">
+	<form method="get" action="/wordsearch/management/entrybattle">
 	<input type="submit" value="完了!"></input>
 </form>
 

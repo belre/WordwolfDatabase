@@ -100,10 +100,22 @@ get '/wordsearch/management/' do
 end
 
 
-get '/wordsearch/management/entrybattle/' do
-	statedialog_management = StateManagement_Init.new
-	erb:'management/management_entry_main'
+get '/wordsearch/management/entrybattle' do
+	p params[:entrymode]
+	
+	if params[:entrymode] == nil or params[:entrymode] == "arrange_oldbattle" then
+		statedialog_management = StateManagement_Init_ArrangeOldGame.new
+		@dbdataview = statedialog_management.getDataViewFromTables()
+		erb:'management/management_arrange_oldgame_main'	
+	elsif params[:entrymode] == "new" then
+		statedialog_management = StateManagement_Init.new
+		erb:'management/management_entry_main'
+	else
+		403
+	end
 end
+
+
 
 post '/wordsearch/management/entrybattle/processing' do
 	# - State Pattern (For Page Transition)- 
@@ -124,7 +136,6 @@ post '/wordsearch/management/entrybattle/processing' do
 	@params = nextobj[1]
 	
 	p "Selector" + params[:select_index].to_s
-	
 	
 	@dbdataview = statedialog_management.getDataViewFromTables()
 	

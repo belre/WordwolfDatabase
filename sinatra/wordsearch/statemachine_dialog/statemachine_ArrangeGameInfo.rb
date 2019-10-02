@@ -36,7 +36,6 @@ class StateManagement_ArrangeGameInfo
 		self._form_attributes = self.init_form_attributes
 		self._internal_attributes = self.init_internal_attributes
 	end
-
 	"
 	paraemterをロードするメソッド
 	"
@@ -50,20 +49,45 @@ class StateManagement_ArrangeGameInfo
 		
 		# フォーム情報の取得(同じ画面が表示されている限り永続して保持する)
 		self._form_attributes[:value_gamemaster] = params[:gamemaster]
-		self._form_attributes[:form_playerinfo] = { :number => params[:playernumber].to_i , :playername => Hash.new, :thumbnailpath => Hash.new}
+		self._form_attributes[:form_playerinfo] = { :number => params[:playernumber].to_i , :playerinfo => Hash.new }
 		(0..(params[:playernumber].to_i-1)).each do |i|
-			key_username = ("player_name_" + i.to_s).to_sym
-			if params[key_username] != nil then
-				self._form_attributes[:form_playerinfo][:playername][key_username] = params[key_username]
-			end
+			key_common_field = "player_"
+			key_fields = ['name_', 'thumbnail_path_', 'iswolf_', 'numvotes_', 'comebackword_', 'isghost_', 'isdisposed_']
 			
-			key_thumbnail = ("player_thumbnail_path_" + i.to_s).to_sym
-			if params[key_thumbnail] != nil then
-				self._form_attributes[:form_playerinfo][:thumbnailpath][key_thumbnail] = params[key_thumbnail]
+			(0..key_fields.count-1).each do |j|
+				keyname = (key_common_field + key_fields[j] + i.to_s).to_sym
+				if params[keyname] != nil then
+					self._form_attributes[:form_playerinfo][:playerinfo][keyname] = params[keyname]
+				end
 			end
 		end
 		
+		# word
+		self._form_attributes[:form_word_villagers] = params[:word_villagers]
+		self._form_attributes[:form_word_wolves] = params[:word_wolves]
+		# winlose
+		if params[:winlose] == "win_villagers" then
+			self._form_attributes[:form_winlose] = 2
+		elsif params[:winlose] == "win_wolves" then
+			self._form_attributes[:form_winlose] = 3
+		elsif params[:winlose] == "winlose_draw" then
+			self._form_attributes[:form_winlose] = 1
+		else
+			self._form_attributes[:form_winlose] = 0
+		end
+
+		# comeback
+		self._form_attributes[:form_comeback_villagers] = (params[:comeback_villagers] != nil)
+		self._form_attributes[:form_comeback_wolves] = (params[:comeback_wolves] != nil)
+		# time
+		self._form_attributes[:form_game_starttime] = params[:game_starttime]
+		self._form_attributes[:form_game_limittime_min] = params[:game_limittime_min].to_i
+		self._form_attributes[:form_game_limittime_sec] = params[:game_limittime_sec].to_i
+		self._form_attributes[:form_game_giveup] = (params[:game_giveup] != nil)
+		self._form_attributes[:form_game_extendtime_min] = params[:game_extendtime_min].to_i
+		self._form_attributes[:form_game_extendtime_sec] = params[:game_extendtime_sec].to_i
 		
+
 		# 同一画面の遷移の場合
 		if self._internal_attributes[:proctype] == "checkself" then
 			self._internal_attributes[:update_flag] = true								# 同じ画面を更新する
@@ -92,9 +116,9 @@ class StateManagement_ArrangeGameInfo
 				if params[:thumbnail_event] != nil then
 					if params[params[:thumbnail_event]] != nil then
 						self._internal_attributes[:thumbnail_info] = { 
-								:isexecute => true,
-								:target_uiname => params[:thumbnail_event], 
-								:formdata => params[params[:thumbnail_event]]
+							:isexecute => true,
+							:target_uiname => params[:thumbnail_event], 
+							:formdata => params[params[:thumbnail_event]]
 						}
 					end
 				end
@@ -145,7 +169,7 @@ class StateManagement_ArrangeGameInfo
 					end
 					
 					#p self._internal_attributes[:thumbnail_info][:target_uiname]
-					self._form_attributes[:form_playerinfo][:thumbnailpath][self._internal_attributes[:thumbnail_info][:target_uiname].to_sym] = filename
+					self._form_attributes[:form_playerinfo][:playerinfo][self._internal_attributes[:thumbnail_info][:target_uiname].to_sym] = filename
 				rescue Errno::EEXIST
 					# ファイルが存在してたらリトライ
 					retry
@@ -173,9 +197,13 @@ class StateManagement_ArrangeGameInfo
 	
 	def getDataViewFromTables()
 		dbdata = {}
-		DatabaseQueryController.addToDbData_GameInfo(@_common_params, dbdata)
-		DatabaseQueryController.addToDbData_UserInfo(@_common_params, dbdata)
-		DatabaseQueryController.addToDbData_GameRuleSetting( @_common_params, dbdata)
+		DatabaseQueryController.addToDbData_GameInfo(@_common_params[:battle_id], dbdata)
+		DatabaseQueryController.addToDbData_UserInfo(dbdata)
+		DatabaseQueryController.addToDbData_GameRuleSetting( dbdata)
+		DatabaseQueryController.addToDbData_GamePlayer(@_common_params[:battle_id], @_common_params[:select_index], dbdata)
+		DatabaseQueryController.addToDbData_GameVote(@_common_params[:battle_id], @_common_params[:select_index], dbdata)
+		DatabaseQueryController.addToDbData_GameAnswer(@_common_params[:battle_id], @_common_params[:select_index], dbdata)
+		
 		return dbdata
 	end
 	
@@ -185,7 +213,6 @@ class StateManagement_ArrangeGameInfo
 	"
 	def getNextState(params)
 		params = @_common_params
-		
 		
 		params['form_attributes'] = self._form_attributes
 		# 次状態決定

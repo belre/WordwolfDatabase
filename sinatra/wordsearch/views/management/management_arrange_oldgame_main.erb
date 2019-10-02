@@ -9,28 +9,7 @@
 <script type="text/javascript" src = "/js/CommonFunctions.js"></script>
 <script type="text/javascript">
 window.onload = function(){	
-	// 時間設定処理関連
-	starttime_expr = new Date();
 
-	if( starttime_expr.getHours() == 0 ) {
-		starttime_expr.setDate(starttime_expr.getDate() - 1);
-		starttime_expr.setSeconds(0);
-		starttime_expr.setMinutes(0);
-		starttime_expr.setHours(23);
-		//starttime_expr = starttime_expr - 1;
-	}
-	else {
-		starttime_expr.setSeconds(0);
-		starttime_expr.setMinutes(0);
-		starttime_expr.setHours(starttime_expr.getHours() - 1);
-	}
-				
-	endtime_expr = new Date();
-	endtime_expr.setSeconds(0);
-	endtime_expr.setMinutes(0);
-	
-	document.getElementById('datetime_starttime').value = formatUIDatetimeLocalObject(starttime_expr);
-	document.getElementById('datetime_endtime').value = formatUIDatetimeLocalObject(endtime_expr);
 };
 			
 
@@ -44,7 +23,51 @@ window.onload = function(){
 	<%= render(:erb, :"management/management_menubar") %>
 	
 	<div id="MenuArea_Right">
-	<h1>Entry New Battle</h1>
+
+	
+	<h1>Arrange Old Battle</h1>
+	
+	<form method="post" name="battleform" action="entrybattle/processing">
+		<input type="hidden" name="proctype" value="arrange_oldgame"></input>
+		<input type="submit" value="Arrange Game" >	
+	<table border = 1>
+		<tr>
+			<th></th>
+			<th>ID</th>
+			<th>主催者</th>
+			<th>開始/終了時刻</th>
+			<th>試合数</th>
+		</tr>
+	<% if @dbdataview != nil and @dbdataview[:GameInfoAll] != nil and @dbdataview[:BattleInfo] != nil then %>
+		<% @ischecked = false %>
+		<% @dbdataview[:BattleInfo].each do |item| %>
+			<% 
+				@gameinfo = @dbdataview[:GameInfoAll].where(:Id => item.Id)
+			%>
+			<tr>
+				<td><input type="radio" name="game_selector_id" value="<%= item.Id.to_s %>"
+					<% if !@ischecked then %>
+						checked = "checked"
+						<% @ischecked = true %>
+					<% end %>
+					></td>
+				<td><%= item.Id %></td>
+				<td><%= item.host %></td>
+				<td><%= item.starttime %> 〜<br> <%= item.endtime %></td>
+				
+				<td><%= @gameinfo.all.count %></td>
+			
+			</tr>
+		<% end %>
+	<% else %>
+		DB Access Error
+	<% end %>
+	</table>
+	</form>
+			
+
+	<!--
+	<h1>Arrange Old Battle</h1>
 	<form method="post" name="battleform" action="entrybattle/processing">
 	<input type="hidden" name="proctype" value="creategame"></input>
 	<table border=0>
@@ -57,7 +80,11 @@ window.onload = function(){
 		<tr><td></td><td><input type="submit" value="Create New Battle" ></td></tr>
 	</table>
 	</form>
+	-->
+	
 	</div>
+
+	
 <!-- スクリプトでブロッキングを起こすものはここに記述
 ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
 <!-- SCRIPTS -->

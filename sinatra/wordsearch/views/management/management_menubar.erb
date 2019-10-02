@@ -11,8 +11,11 @@
 	-->
 	
 	<a href="/wordsearch/management/"> Top </a> <br>
-	<a href="/wordsearch/management/entrybattle/"> Entry New Battle</a><br>
-	<a href="."> Arrange Old Battle</a><br>
+	
+	
+	<a href="/wordsearch/management/entrybattle?entrymode=new"> Entry New Battle</a><br>
+	<a href="/wordsearch/management/entrybattle?entrymode=arrange_oldbattle"> Arrange Old Battle</a><br>
+
 	<form method="post"name="form2" action="del">
 		<input type="hidden" name="_method" value="delete">
 		<%= csrf_tag %>
