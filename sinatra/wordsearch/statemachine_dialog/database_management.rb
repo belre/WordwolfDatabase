@@ -31,6 +31,8 @@ class TblUserInfo < ActiveRecord::Base
 	has_many :tbl_game_vote, :class_name => "TblGameVote", :primary_key => :uId_target, :foreign_key => :uId_target
 	has_many :tbl_game_player, :class_name => "TblGamePlayer", :primary_key => :uId, :foreign_key => :uId
 	has_many :tbl_game_answer, :class_name => "TblGameAnswer", :primary_key => :uId, :foreign_key => :uId
+	has_many :tbl_talk_message, :class_name => "TblGamePlayer", :primary_key => :uId, :foreign_key => :uId
+	has_many :tbl_talk_reply, :class_name => "TblGameAnswer", :primary_key => :uId, :foreign_key => :uId
 end
 
 # TblGameInfo （ゲーム情報テーブル)
@@ -42,6 +44,8 @@ class TblGameInfo < ActiveRecord::Base
 	has_many :tbl_game_vote, :class_name => "TblGameVote", :primary_key => :gId, :foreign_key => :gId
 	has_many :tbl_game_player, :class_name => "TblGamePlayer", :primary_key => :gId, :foreign_key => :gId
 	has_many :tbl_game_answer, :class_name => "TblGameAnswer", :primary_key => :gId, :foreign_key => :gId
+	has_many :tbl_talk_message, :class_name => "TblGamePlayer", :primary_key => :gId, :foreign_key => :gId
+	has_many :tbl_talk_reply, :class_name => "TblGameAnswer", :primary_key => :gId, :foreign_key => :gId
 end
 	
 
@@ -70,15 +74,15 @@ end
 
 # TblTalkMessage（発言・質問テーブル）
 class TblTalkMessage < ActiveRecord::Base
-	
-	
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId
+	belongs_to :tbl_game_info, :class_name => "TblGameVote", :foreign_key => :gId
 end
 
 
 # TblTalkReply（YesNoGray回答テーブル）
 class TblTalkReply < ActiveRecord::Base
-	
-	
+	belongs_to :tbl_user_info, :class_name => "TblUserInfo", :foreign_key => :uId
+	belongs_to :tbl_game_info, :class_name => "TblGameVote", :foreign_key => :gId
 end
 
 
@@ -331,6 +335,131 @@ class DatabaseQueryController
 		
 	end
 	
+	def self.transact_arrangeremarks(battle_id, select_index, jsonparam)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		
+		
+		dbdata = {}
+		self.addToDbData_GamePlayer(battle_id, select_index, dbdata)
+		self.addToDbData_GameInfoOne(battle_id, select_index, dbdata)
+		
+		# 表示用に暫定にしよう
+		user = []
+		dbdata[:GamePlayer].each do |obj|
+			user.push(obj.tbl_user_info.username)
+		end
+		user.push(dbdata[:GameInfoOne][0].tbl_user_info.username)
+		
+		# ここがほんちゃん
+		user_userid = []
+		dbdata[:GamePlayer].each do |obj|
+			tmp = []
+			tmp.push(obj.tbl_user_info.uId)
+			tmp.push(obj.tbl_user_info.username)
+			
+			user_userid.push(tmp)
+		end
+		
+		tmp = []
+		tmp.push(dbdata[:GameInfoOne][0].tbl_user_info.uId)
+		tmp.push(dbdata[:GameInfoOne][0].tbl_user_info.username)
+		user_userid.push(tmp)
+		
+		
+		TblTalkMessage.transaction do
+			TblTalkReply.transaction do
+				### --- JSON Reply Appendの番号コードの分離 --- ###
+				reply_append_list = {}
+				jsonparam["Reply_Append"].each do |k , v|
+					tmp_reply_append = {}
+					
+					# #~@の領域を抽出
+					remarkno_sign_ind = k.index('#')
+					speaker_sign_ind = k.index('@')
+					if  remarkno_sign_ind == nil or speaker_sign_ind == nil then
+						next
+					end
+					if  remarkno_sign_ind - 1 >= speaker_sign_ind then
+						next
+					end
+					
+					
+					remarkno_len = speaker_sign_ind - 1
+					speaker_len = k.length - speaker_sign_ind - 1
+					
+					remarkno_str = k[remarkno_sign_ind+1, remarkno_len]
+					speaker_str = k[speaker_sign_ind+1, speaker_len]
+					
+					if remarkno_str.to_i(0) == 0 then
+						next
+					end
+					
+					
+					puts speaker_str
+					
+					tmp_reply_append[:remarkno] = (remarkno_str.to_i(0))
+					tmp_reply_append[:speaker] = (speaker_str)
+					tmp_reply_append[:remark_append] = v
+					reply_append_list[tmp_reply_append[:remarkno]] = tmp_reply_append
+				end
+				
+				
+				
+				
+				### --- JSON 情報を読み出しする --- ###
+				puts "経過時間:" + jsonparam["PassedTime"].to_s 
+				
+				user_userid.each do |cuser|
+					if jsonparam["Message"][cuser[1]] != nil
+						puts "Q." + cuser[1] + " "+ jsonparam["Message"][cuser[1]] 
+						tbl_talk_message = TblTalkMessage.new
+						tbl_talk_message.gId = gId
+						tbl_talk_message.uId = cuser[0]
+						tbl_talk_message.passedtime_min	= 1
+						tbl_talk_message.passedtime_sec	= 0
+						tbl_talk_message.limittime_min	= 5
+						tbl_talk_message.limittime_sec	= 0
+						tbl_talk_message.message = jsonparam["Message"][cuser[1]] 
+						tbl_talk_message.save!
+						
+						#tbl_talk_message.role = ''
+						#tbl_talk_message.isvillagers = 0
+						#tbl_talk_message.iswolves = 0
+						#tbl_talk_message.save!
+					end
+				end
+				
+				user.each do |name|
+					if jsonparam["Reply"][name] != nil
+						puts "A." + name + " " + jsonparam["Reply"][name]
+					end
+				end
+				
+				
+				
+				reply_append_list.each do |k, v|
+					if user.include?(v[:speaker].to_s) then
+						puts k.to_s + " " + v[:speaker].to_s + " " + v[:remark_append].to_s 
+						
+					end
+				end
+				puts "----------------"
+				
+				
+				
+			end
+		end
+		
+		
+		
+		
+	end
+	
+	
+	
 	def self.transact_renewgameinfo(form_attributes)
 	end
 	
@@ -419,6 +548,18 @@ class DatabaseQueryController
 		#return dbdata
 	end
 	
+	def self.addToDbData_GameInfoOne(battle_id, select_index, dbdata)
+		dbdata[:GameInfoOne] = TblGameInfo
+		.includes(:tbl_battle_info)
+		.includes(:tbl_game_rule_setting)
+		.includes(:tbl_game_result)
+		.includes(:tbl_user_info)
+		.where(:Id => battle_id)
+		.where(:gameindex => select_index)
+		
+		#return dbdata
+	end
+	
 	def self.addToDbData_UserInfo( dbdata)
 		dbdata[:UserInfo] = TblUserInfo
 			#.where(:NpcStatus => 0)
@@ -459,6 +600,33 @@ class DatabaseQueryController
 			.includes(:tbl_user_info)
 			.where(:gId => gId)	
 	end
+	
+	def self.addToDbData_TalkMessage(battle_id, select_index, dbdata)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		dbdata[:TalkMessage] = TblTalkMessage
+			.includes(:tbl_user_info)
+			.where(:gId => gId)
+		
+	end
+	
+	def self.addToDbData_TalkReply(battle_id, select_index, dbdata)
+		tmpdbdata = {}
+		addToDbData_GameInfo(battle_id, tmpdbdata)
+		gId = tmpdbdata[:GameInfo].where(:gameindex => select_index).first.gId
+		
+		dbdata[:TalkReply] = TblTalkReply
+			.includes(:tbl_user_info)
+			.where(:gId => gId)
+		
+		
+		
+	end
+	
+	
+	
 	
 end
 

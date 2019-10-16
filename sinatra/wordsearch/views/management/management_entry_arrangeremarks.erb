@@ -6,6 +6,28 @@
 	render(:erb, :"management/header/header_remarksform")
 %>
 </head>
+	
+	
+<script type="text/javascript">
+
+function openDetailDiscussion()
+{
+    var child_win = window.open('/wordsearch/management/entrybattle/management_detailremarks_newwindow', '', 'width=640,height=400,scrollbars=yes');
+}
+		
+//function updateByJsonMessage(value0)
+//{
+	//form_file_upload = document.getElementById("link_selector");
+	//form_file_upload.value= value0;
+	
+	//alert("Hello");
+	
+	//form_file_upload.submit();
+//}
+
+
+</script>
+
 
 
 <body>
@@ -26,45 +48,48 @@
 		</table>
 	</div>
 		
-	<form>
+	<form name = "form_file_upload" method="post" enctype="multipart/form-data">
+	<input type="hidden" name="proctype" value="update"></input>
 	<div id="TopRight1_1_area">
-			<b>JSONファイルアップロード</b><br>
-			<input type="file" id="selmulti" accept="application/json" multiple="multiple">
-			<script>
-				var obj2 = document.getElementById("selmulti");
-				obj2.addEventListener("change", function(evt) {
-					document.getElementById("ui_committodb").innerHTML = '→<input type="button" value="Commit to DB" id="click_committodb">'; 
-				}, false);
-			</script>
+		<b>JSONファイルアップロード</b><br>
+		<input type="file" id="selmulti" accept="application/json" multiple="multiple" name="messageloader[]">
+		<script>
+			var obj2 = document.getElementById("selmulti");
+			obj2.addEventListener("change", function(evt) {
+				document.getElementById("ui_committodb").innerHTML = '→<input type="submit" value="Commit to DB" id="click_committodb">'; 
+			}, false);
+		</script>
 	</div>
-
 	<div id="TopRight1_2_area">
-		<div id="ui_committodb" onclick="location.href='management_battledetails.html'"></div>
+		<div id="ui_committodb"> <!-- onclick="location.href='management_battledetails.html'"> -->
+		</div>
 	</div>
 	</form>
-		
+	<form method="post">
 	<div id="Bottom_area">
 	
 			<b>発言記録</b>	
 			
-			<form name="gameremarksform_acv" method="post" >
 			<input type="hidden" name="proctype" id="link_selector" value="selectgame"></input>
-			<input type="submit" value="完了">
-				<%= csrf_tag %>
-			</form>
-				
+			<input type="submit" value="完了" >
 			<input type="button" value="試合情報"> <br>
 	<hr>
 	<input type="button" value="項目削除">
 	<table>
 		<tr><th></th><th>No.</th><th>経過時間</th><th>制限時間</th><th>発言者</th><th>発言内容</th><th>Y回答</th><th>N回答</th><th>G回答</th><th>?回答</th><th>詳細</th></tr>
-		<tr><td><input type="checkbox"></td><td>1<td>0:20</td><td>6:40</td><td>豌豆豆(村人)</td><td>海外に行く時使う？</td><td>1</td><td>4</td><td>0</td><td>1</td><td><input type="button" value="詳細"></td></tr>
-		<tr><td><input type="checkbox"></td><td>2<td>1:05</td><td>5:55</td><td>応為の妹(村人)</td><td>0〜9を使って表す？</td><td>0</td><td>6</td><td>0</td><td>0</td><td><input type="button" value="詳細"></td></tr>
+		<!--
+		<tr><td><input type="checkbox"></td><td>1<td>0:20</td><td>6:40</td><td>豌豆豆(村人)</td><td>海外に行く時使う？</td><td>1</td><td>4</td><td>0</td><td>1</td><td><input type="button" value="詳細" onclick="openDetailDiscussion()"></td></tr>
+	<tr><td><input type="checkbox"></td><td>2<td>1:05</td><td>5:55</td><td>応為の妹(村人)</td><td>0〜9を使って表す？</td><td>0</td><td>6</td><td>0</td><td>0</td><td><input type="button" value="詳細"></td></tr>
 		<tr><td><input type="checkbox"></td><td>3<td>1:30</td><td>5:30</td><td>しゃぶたろう(村人)</td><td>tinderやってますか？</td><td>2</td><td>4</td><td>0</td><td>0</td><td><input type="button" value="詳細"></td></tr>
-		
+		-->
+		<% @dbdataview[:TalkMessage].each_with_index do |obj, i| %>
+		<tr><td><input type="checkbox"></td><td><%= i+1 %><td>1:30</td><td>5:30</td><td><%=obj.tbl_user_info.username%></td><td><%=obj.message%></td><td>2</td><td>4</td><td>0</td><td>0</td><td><input type="button" value="詳細" onclick="openDetailDiscussion()"></td></tr>
+
+		<% end %>
 	</table>
 	</div>
-		
+	</form>
+				
 <!-- スクリプトでブロッキングを起こすものはここに記述
 ブロッキングを起こす原因としては、CSSのセレクタ操作（IE）、負荷の高いDOM操作、多数のスクリプトなど -->
 <!-- SCRIPTS -->

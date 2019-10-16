@@ -147,6 +147,9 @@ post '/wordsearch/management/entrybattle/processing' do
 		
 end
 
+get '/wordsearch/management/entrybattle/management_detailremarks_newwindow' do
+	erb:'management/management_detailremarks_newwindow'
+end
 
 
 delete '/wordsearch/management/del' do

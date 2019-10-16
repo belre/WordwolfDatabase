@@ -1,0 +1,14 @@
+<html>
+	<script type="javascript/text">
+		window.addEventListener("message", receiveMessage, false);
+		function receiveMessage(e)
+		{
+			alert(e.data);
+		}
+	</script>
+	<body>
+		
+	</body>
+</html>
+	
+	
